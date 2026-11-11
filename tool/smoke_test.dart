@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../lib/io_fs.dart';
 import '../lib/sync_engine.dart';
 
 Future<void> main() async {
@@ -7,8 +8,8 @@ Future<void> main() async {
   final exts = {'.mp3', '.flac'};
 
   Future<SyncStats> runOnce() => Syncer(
-        sources: ['/home/user/Downloads/maxell-work/testmusic'],
-        destRoot: dest,
+        sources: [IoFileSystem('/home/user/Downloads/maxell-work/testmusic')],
+        dest: IoFileSystem(dest),
         extensions: exts,
         onProgress: (s) {},
       ).run();
@@ -39,8 +40,8 @@ Future<void> main() async {
   // mirror mode: remove a source file, mirror deletes it from USB
   await f.delete();
   s = await Syncer(
-    sources: ['/home/user/Downloads/maxell-work/testmusic'],
-    destRoot: dest,
+    sources: [IoFileSystem('/home/user/Downloads/maxell-work/testmusic')],
+    dest: IoFileSystem(dest),
     extensions: exts,
     mirror: true,
   ).run();

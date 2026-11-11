@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:music_sync/io_fs.dart';
 import 'package:music_sync/sync_engine.dart';
 
 Future<SyncStats> runSync(String src, String dest,
     {bool mirror = false, Set<String> exts = const {'.mp3', '.flac'}}) {
   return Syncer(
-    sources: [src],
-    destRoot: dest,
+    sources: [IoFileSystem(src)],
+    dest: IoFileSystem(dest),
     extensions: exts,
     mirror: mirror,
   ).run();
@@ -61,12 +62,36 @@ void main() {
     }
     var calls = 0;
     final s = await Syncer(
-      sources: [src.path],
-      destRoot: dest.path,
+      sources: [IoFileSystem(src.path)],
+      dest: IoFileSystem(dest.path),
       extensions: const {'.mp3'},
       shouldCancel: () => ++calls > 1,
     ).run();
     expect(s.cancelled, isTrue);
+    await tmp.delete(recursive: true);
+  });
+
+  test('two sources with colliding relative paths both land on dest',
+      () async {
+    final tmp = await Directory.systemTemp.createTemp('musync_collide');
+    final s1 = Directory('${tmp.path}/s1');
+    final s2 = Directory('${tmp.path}/s2');
+    final dest = Directory('${tmp.path}/dest');
+    await s1.create(recursive: true);
+    await s2.create(recursive: true);
+    await dest.create(recursive: true);
+    await File('${s1.path}/same.mp3').writeAsBytes(List.filled(10, 1));
+    await File('${s2.path}/same.mp3').writeAsBytes(List.filled(20, 2));
+
+    final s = await Syncer(
+      sources: [IoFileSystem(s1.path), IoFileSystem(s2.path)],
+      dest: IoFileSystem(dest.path),
+      extensions: const {'.mp3'},
+    ).run();
+    expect(s.copied, 2);
+    expect(await File('${dest.path}/same.mp3').exists(), isTrue);
+    expect(await File('${dest.path}/s2/same.mp3').exists(), isTrue);
+
     await tmp.delete(recursive: true);
   });
 }

@@ -11,6 +11,7 @@ class AppSettings {
   bool ejectAfterSync = false;
   String? lastDestPath;
   String? lastDestLabel;
+  Map<String, String> sourceNames = {};
 
   static File get _file {
     final xdg = Platform.environment['XDG_CONFIG_HOME'] ?? '${Platform.environment['HOME']}/.config';
@@ -28,6 +29,8 @@ class AppSettings {
         ejectAfterSync = j['ejectAfterSync'] ?? false;
         lastDestPath = j['lastDestPath'];
         lastDestLabel = j['lastDestLabel'];
+        sourceNames =
+            (j['sourceNames'] as Map?)?.cast<String, String>() ?? {};
       }
     } catch (_) {}
   }
@@ -43,6 +46,7 @@ class AppSettings {
         'ejectAfterSync': ejectAfterSync,
         'lastDestPath': lastDestPath,
         'lastDestLabel': lastDestLabel,
+        'sourceNames': sourceNames,
       }));
     } catch (_) {}
   }
