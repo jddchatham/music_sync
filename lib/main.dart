@@ -124,6 +124,25 @@ class _HomePageState extends State<HomePage> {
     return (result == null || result.isEmpty) ? null : result;
   }
 
+  Future<void> _ejectDrive(UsbDrive d) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+        .showSnackBar(SnackBar(content: Text('Ejecting ${d.label}...')));
+    final ok = await UsbDetect.eject(d.device ?? d.mountPath);
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok
+          ? '${d.label} ejected — safe to unplug'
+          : 'Failed to eject ${d.label}'),
+    ));
+    if (ok) {
+      if (selectedDrive?.mountPath == d.mountPath) {
+        setState(() => selectedDrive = null);
+      }
+      _rescan();
+    }
+  }
+
   Future<void> _sync() async {
     if (selectedDrive == null || settings.sources.isEmpty) return;
     settings.lastDestPath = selectedDrive!.mountPath;
@@ -319,6 +338,12 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         '${d.freeGb} GB free',
                         style: theme.textTheme.bodySmall,
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.eject, size: 18),
+                        tooltip: 'Eject ${d.label}',
+                        onPressed: running ? null : () => _ejectDrive(d),
                       ),
                     ],
                   ),
